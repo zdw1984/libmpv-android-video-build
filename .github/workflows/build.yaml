@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main     # 你也可以改成 tags: - '*' 表示推送 tag 才触发
-
 permissions:
   contents: write
 
