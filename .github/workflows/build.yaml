@@ -27,17 +27,17 @@ jobs:
         run: |
           mkdir sdk
           ln -s ${ANDROID_HOME} ./sdk/android-sdk-linux
-      - name: Bundle (default)
-        working-directory: ./buildscripts
-        run: |
-          sudo chmod +x bundle_default.sh
-          ./bundle_default.sh
-      # TODO(alexmercerind): Figure out this shit.
-      # - name: Bundle (full)
+      # - name: Bundle (default)
       #   working-directory: ./buildscripts
       #   run: |
-      #     sudo chmod +x bundle_full.sh
-      #     ./bundle_full.sh
+      #     sudo chmod +x bundle_default.sh
+      #     ./bundle_default.sh
+      # TODO(alexmercerind): Figure out this shit.
+      - name: Bundle (full)
+        working-directory: ./buildscripts
+        run: |
+          sudo chmod +x bundle_full.sh
+          ./bundle_full.sh
       # - name: Bundle (encoders-gpl)
       #   working-directory: ./buildscripts
       #   run: |
