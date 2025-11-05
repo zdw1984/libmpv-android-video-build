@@ -1,9 +1,11 @@
 name: Build libmpv-android
 
+# 触发条件：推送到 main 分支
 on:
   push:
     branches:
-      - main     # 你也可以改成 tags: - '*' 表示推送 tag 才触发
+      - main
+
 permissions:
   contents: write
 
@@ -38,26 +40,25 @@ jobs:
       - name: Run bundle_full.sh
         working-directory: ./buildscripts
         run: |
+          set -e
           chmod +x bundle_full.sh
           ./bundle_full.sh
 
-      # 6️⃣ List build output (debug)
+      # 6️⃣ Debug: list output
       - name: List build output
         run: |
-          echo "=== Checking build output ==="
-          ls -lh ./buildscripts/deps/media-kit-android-helper/app/build/libs || true
-          ls -lh ./buildscripts/deps/media-kit-android-helper/app/build/outputs/apk/release || true
-          ls -lh ./buildscripts/output || true
+          echo "=== Buildscripts content ==="
+          ls -R ./buildscripts
 
-      # 7️⃣ Upload Artifact (用于调试下载)
+      # 7️⃣ Upload artifacts (可在 Actions 页面下载)
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: libmpv-artifacts
           path: |
-            ./buildscripts/deps/media-kit-android-helper/app/build/libs/*.jar
+            ./buildscripts/full-*.jar
             ./buildscripts/deps/media-kit-android-helper/app/build/outputs/apk/release/*.apk
-            ./buildscripts/output/**/*
+            ./buildscripts/lib/**/*
 
       # 8️⃣ Create GitHub Release 并上传文件
       - name: Create GitHub Release
@@ -68,8 +69,8 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            ./buildscripts/deps/media-kit-android-helper/app/build/libs/*.jar
+            ./buildscripts/full-*.jar
             ./buildscripts/deps/media-kit-android-helper/app/build/outputs/apk/release/*.apk
-            ./buildscripts/output/**/*
+            ./buildscripts/lib/**/*   # 上传所有 .so 文件
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
