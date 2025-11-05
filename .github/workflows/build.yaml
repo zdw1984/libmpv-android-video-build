@@ -1,10 +1,9 @@
 name: Build libmpv-android
 
-# 触发条件：推送 Tag 时
 on:
   push:
     branches:
-      - main
+      - main     # 你也可以改成 tags: - '*' 表示推送 tag 才触发
 
 permissions:
   contents: write
@@ -37,36 +36,41 @@ jobs:
           ln -s ${ANDROID_HOME} ./sdk/android-sdk-linux
 
       # 5️⃣ Run build script
-      - name: Bundle (full)
+      - name: Run bundle_full.sh
         working-directory: ./buildscripts
         run: |
-          sudo chmod +x bundle_full.sh
+          chmod +x bundle_full.sh
           ./bundle_full.sh
 
-      # 6️⃣ List output (调试用)
+      # 6️⃣ List build output (debug)
       - name: List build output
         run: |
-          ls -R ./buildscripts
+          echo "=== Checking build output ==="
+          ls -lh ./buildscripts/deps/media-kit-android-helper/app/build/libs || true
+          ls -lh ./buildscripts/deps/media-kit-android-helper/app/build/outputs/apk/release || true
+          ls -lh ./buildscripts/output || true
 
-      # 7️⃣ Upload Artifact (可下载)
-      - name: Upload Artifact
+      # 7️⃣ Upload Artifact (用于调试下载)
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: libmpv-artifacts
           path: |
             ./buildscripts/deps/media-kit-android-helper/app/build/libs/*.jar
             ./buildscripts/deps/media-kit-android-helper/app/build/outputs/apk/release/*.apk
+            ./buildscripts/output/**/*
 
       # 8️⃣ Create GitHub Release 并上传文件
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref_name }}   # 使用 Tag 名
+          tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
           files: |
             ./buildscripts/deps/media-kit-android-helper/app/build/libs/*.jar
             ./buildscripts/deps/media-kit-android-helper/app/build/outputs/apk/release/*.apk
+            ./buildscripts/output/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
