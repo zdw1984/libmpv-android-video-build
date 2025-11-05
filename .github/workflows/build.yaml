@@ -1,62 +1,72 @@
 name: Build libmpv-android
 
+# 触发条件：推送 Tag 时
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*'   # 例如 v1.0.0, v2.1.3
 
 permissions:
   contents: write
 
 jobs:
   build:
-    name: Build
     runs-on: ubuntu-22.04
+
     steps:
+      # 1️⃣ Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      # 2️⃣ Setup Java
       - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
+
+      # 3️⃣ Setup Gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+
+      # 4️⃣ Symlink Android SDK
       - name: Symlink SDK
         working-directory: ./buildscripts
         run: |
-          mkdir sdk
+          mkdir -p sdk
           ln -s ${ANDROID_HOME} ./sdk/android-sdk-linux
-      # - name: Bundle (default)
-      #   working-directory: ./buildscripts
-      #   run: |
-      #     sudo chmod +x bundle_default.sh
-      #     ./bundle_default.sh
-      # TODO(alexmercerind): Figure out this shit.
+
+      # 5️⃣ Run build script
       - name: Bundle (full)
         working-directory: ./buildscripts
         run: |
           sudo chmod +x bundle_full.sh
           ./bundle_full.sh
-      # - name: Bundle (encoders-gpl)
-      #   working-directory: ./buildscripts
-      #   run: |
-      #     sudo chmod +x bundle_encoders-gpl.sh
-      #     ./bundle_encoders-gpl.sh
+
+      # 6️⃣ List output (调试用)
+      - name: List build output
+        run: |
+          ls -R ./buildscripts
+
+      # 7️⃣ Upload Artifact (可下载)
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: artifact
+          name: libmpv-artifacts
           path: |
-            ./buildscripts/*.jar
-            ./buildscripts/deps/media-kit-android-helper/app/build/outputs/apk/release/*.jar
-      - name: Upload Release
+            ./buildscripts/deps/media-kit-android-helper/app/build/libs/*.jar
+            ./buildscripts/deps/media-kit-android-helper/app/build/outputs/apk/release/*.apk
+
+      # 8️⃣ Create GitHub Release 并上传文件
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
-        if: github.ref == 'refs/heads/main'
         with:
-          draft: true
+          tag_name: ${{ github.ref_name }}   # 使用 Tag 名
+          name: Release ${{ github.ref_name }}
+          draft: false
           prerelease: false
-          tag_name: "vnext"
           files: |
-            buildscripts/*.zip
-            buildscripts/deps/media-kit-android-helper/app/build/outputs/apk/release/*.jar
+            ./buildscripts/deps/media-kit-android-helper/app/build/libs/*.jar
+            ./buildscripts/deps/media-kit-android-helper/app/build/outputs/apk/release/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
